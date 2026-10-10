@@ -1,4 +1,4 @@
--- ShopSphere commerce conversion. Apply after 001_initial.sql.
+-- IBYIZAMART commerce conversion. Apply after 001_initial.sql.
 -- Money is stored as integer minor units; private costs never appear in public views.
 
 alter table public.products add column if not exists sku text unique;

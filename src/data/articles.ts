@@ -1,3 +1,4 @@
+import { siteConfig } from '@/config/site';
 import type { Article } from '@/types/catalog';
 
 export const articles: Article[] = [
@@ -19,6 +20,6 @@ export const articles: Article[] = [
   { slug: 'compare-products-before-buying-online', title: 'How to Compare Products Before Buying Online', excerpt: 'A repeatable checklist for separating meaningful differences from marketing noise.', category: 'Smart shopping', image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1200&q=85', publishedAt: '2026-08-31', readMinutes: 5, researchedGuide: true, sections: [
     { heading: 'Define your non-negotiables', body: 'Write down the three requirements that determine whether a product works for you. Use those to eliminate poor fits before looking at extras.' },
     { heading: 'Compare equivalent information', body: 'Make sure dimensions use the same units and that prices include the same accessories. Distinguish manufacturer claims from independently verifiable facts.' },
-    { heading: 'Evaluate the seller as well as the product', body: 'Check ShopSphere’s fulfillment estimate, warranty responsibility, return eligibility, and any return shipping costs before ordering.' },
+    { heading: 'Evaluate the seller as well as the product', body: `Check ${siteConfig.brand}’s fulfillment estimate, warranty responsibility, return eligibility, and any return shipping costs before ordering.` },
   ] },
 ];

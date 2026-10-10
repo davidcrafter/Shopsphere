@@ -1,6 +1,6 @@
 # Payment configuration
 
-ShopSphere ships with a **test-only adapter**, not a live payment gateway. Test orders are permanently marked `mode=test`, excluded from revenue/profit/fulfillment, do not decrement inventory, and cannot be submitted to suppliers.
+IBYIZAMART ships with a **test-only adapter**, not a live payment gateway. Test orders are permanently marked `mode=test`, excluded from revenue/profit/fulfillment, do not decrement inventory, and cannot be submitted to suppliers.
 
 ## Enable test checkout
 

@@ -1,6 +1,6 @@
 # Supabase commerce setup
 
-1. Create a project and apply `migrations/001_initial.sql`, then `migrations/002_dropshipping_commerce.sql`.
+1. Create a project and apply the migrations in order: `migrations/001_initial.sql`, `migrations/002_dropshipping_commerce.sql`, then `migrations/003_ibyizamart_rebrand.sql`.
 2. Configure frontend project URL and anon/publishable key. Never use the service-role key in Vite.
 3. Enable Email authentication and add `/account` and `/reset-password` production URLs to Auth redirects.
 4. Assign the first administrator through trusted Supabase controls using `app_metadata.role=admin`.

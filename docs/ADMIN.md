@@ -2,7 +2,7 @@
 
 ## Secure first administrator
 
-1. Apply migrations `001_initial.sql` then `002_dropshipping_commerce.sql`.
+1. Apply migrations `001_initial.sql`, `002_dropshipping_commerce.sql`, then `003_ibyizamart_rebrand.sql`.
 2. Enable Supabase Email authentication and create the user normally.
 3. Assign `app_metadata.role = "admin"` using the Supabase dashboard or trusted server code.
 4. Sign out/in to refresh the JWT. Never expose a browser field that assigns admin status.

@@ -1,6 +1,6 @@
-# ShopSphere Dropshipping Store
+# IBYIZAMART Dropshipping Store
 
-ShopSphere is a React/TypeScript/Vite storefront with owned retail pricing, variants, persistent cart, Supabase customer accounts, server-priced test checkout, private order tracking, and an RLS-secured admin dashboard. It is no longer an affiliate website: there are no seller redirects or affiliate purchase links.
+IBYIZAMART is a React/TypeScript/Vite storefront with owned retail pricing, variants, persistent cart, Supabase customer accounts, server-priced test checkout, private order tracking, and an RLS-secured admin dashboard. It is no longer an affiliate website: there are no seller redirects or affiliate purchase links.
 
 ## Included
 
@@ -30,11 +30,15 @@ Open `http://localhost:5173`. With no Supabase credentials, the design and demo 
 ## Enable the backend
 
 1. Create a Supabase project.
-2. Apply `supabase/migrations/001_initial.sql`, then `002_dropshipping_commerce.sql`.
+2. Apply the migrations in `supabase/migrations` in order: `001_initial.sql`, `002_dropshipping_commerce.sql`, then `003_ibyizamart_rebrand.sql`.
 3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to `.env.local`.
 4. Follow `supabase/README.md` and `docs/ADMIN.md`.
 5. Create real products/variants in `/admin`; disable demo data in production with `VITE_ENABLE_DEMO_DATA=false`.
 6. For test checkout only, follow `docs/PAYMENTS.md`. Do not enable the test finalizer in production.
+
+## Brand configuration
+
+The store name, slogan, and description are set in `src/config/site.ts`, and every page reads them from there. The page title shown before the app loads is in `index.html`. New order numbers use the `IBY-` prefix set in `supabase/migrations/003_ibyizamart_rebrand.sql`.
 
 ## Architecture
 

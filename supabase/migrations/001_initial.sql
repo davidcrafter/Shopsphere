@@ -1,4 +1,4 @@
--- ShopSphere initial data layer. Apply with the Supabase CLI or SQL editor.
+-- IBYIZAMART initial data layer. Apply with the Supabase CLI or SQL editor.
 create extension if not exists pgcrypto;
 
 create or replace function public.is_admin()
