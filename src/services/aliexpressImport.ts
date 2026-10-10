@@ -1,29 +1,3 @@
-import { z } from 'zod';
-import { categories } from '@/data/categories';
-import { isValidAffiliateUrl } from './affiliate';
-
-const supportedCategoryValues = new Set(categories.flatMap((category) => [category.slug, category.name.toLowerCase()]));
-function resolveCategory(value: string) { const normalized = value.trim().toLowerCase(); return categories.find((category) => category.slug === normalized || category.name.toLowerCase() === normalized)?.slug; }
-const rowSchema = z.object({
-  product_id: z.coerce.string().min(1),
-  product_title: z.string().min(2),
-  promotion_link: z.string().url().refine((url) => isValidAffiliateUrl(url, 'aliexpress'), 'Use an HTTPS URL from an approved AliExpress host.'),
-  image_url: z.string().url().refine((url) => new URL(url).protocol === 'https:', 'Product images must use HTTPS.'),
-  category: z.string().min(1).refine((value) => supportedCategoryValues.has(value.trim().toLowerCase()), 'Use one of the configured ShopSphere category names or slugs.'),
-  product_description: z.string().default(''),
-  target_sale_price: z.coerce.number().positive().optional(),
-  target_sale_price_currency: z.string().length(3).default('USD'),
-});
-export type AliExpressImportRow = z.infer<typeof rowSchema>;
-
-function parseCsvLine(line: string) { const result: string[] = []; let value = ''; let quoted = false; for (let i = 0; i < line.length; i += 1) { const char = line[i]; if (char === '"' && line[i + 1] === '"') { value += '"'; i += 1; } else if (char === '"') quoted = !quoted; else if (char === ',' && !quoted) { result.push(value.trim()); value = ''; } else value += char; } if (quoted) throw new Error('Multiline quoted CSV fields are not supported. Export JSON or remove line breaks inside fields.'); result.push(value.trim()); return result; }
-function slugify(value: string) { return value.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 90); }
-
-export function parseAliExpressImport(input: string): AliExpressImportRow[] {
-  const trimmed = input.trim(); if (!trimmed) throw new Error('Paste an approved AliExpress export first.'); let rows: unknown[];
-  if (trimmed.startsWith('[')) rows = JSON.parse(trimmed) as unknown[];
-  else { const lines = trimmed.split(/\r?\n/).filter(Boolean); const headers = parseCsvLine(lines[0]); rows = lines.slice(1).map((line) => { const values = parseCsvLine(line); return Object.fromEntries(headers.map((header, index) => [header.trim(), values[index] ?? ''])); }); }
-  return z.array(rowSchema).min(1).max(500).parse(rows);
-}
-
-export function toProductRows(rows: AliExpressImportRow[]) { return rows.map((row) => ({ external_id: `aliexpress:${row.product_id}`, name: row.product_title, slug: `${slugify(row.product_title)}-${row.product_id}`, description: row.product_description || 'Product information imported from an approved AliExpress affiliate export. Verify all details before publishing.', short_description: row.product_description?.slice(0, 180) || 'Imported draft — verify product details before publishing.', category_slug: resolveCategory(row.category)!, image_url: row.image_url, aliexpress_affiliate_url: row.promotion_link, currency: row.target_sale_price_currency.toUpperCase(), price_amount: null, price_verified_at: null, source: 'aliexpress', published: false, featured: false, trending: false, deal: false })); }
+import{z}from'zod';const headers=['supplier_product_id','product_title','supplier_url','image_url','category','supplier_cost','shipping_cost','selling_price','sku'];const schema=z.object({supplier_product_id:z.coerce.string().min(1).max(120),product_title:z.string().min(2).max(240),supplier_url:z.string().url().refine(url=>{try{const u=new URL(url);return u.protocol==='https:'&&['www.aliexpress.com','aliexpress.com','www.aliexpress.us','aliexpress.us'].includes(u.hostname);}catch{return false}},'Use an authorized AliExpress HTTPS product URL.'),image_url:z.string().url().refine(url=>new URL(url).protocol==='https:','Image must use HTTPS.'),category:z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),supplier_cost:z.coerce.number().nonnegative().max(1000000),shipping_cost:z.coerce.number().nonnegative().max(1000000),selling_price:z.coerce.number().positive().max(1000000),sku:z.string().min(1).max(120)});export type SupplierImportRow=z.infer<typeof schema>;
+function line(value:string){const out:string[]=[];let cell='',quote=false;for(let i=0;i<value.length;i++){const c=value[i];if(c==='"'&&value[i+1]==='"'){cell+='"';i++;}else if(c==='"')quote=!quote;else if(c===','&&!quote){out.push(cell.trim());cell='';}else cell+=c;}if(quote)throw new Error('Multiline CSV values are not supported.');out.push(cell.trim());return out;}
+export function parseSupplierImport(input:string){const rows=input.trim().split(/\r?\n/).filter(Boolean);if(rows.length<2)throw new Error('Add a CSV header and at least one product.');const actual=line(rows[0]);if(actual.length!==headers.length||headers.some((h,i)=>actual[i]!==h))throw new Error(`Use the exact CSV header: ${headers.join(',')}`);return z.array(schema).max(200).parse(rows.slice(1).map(r=>{const values=line(r);if(values.length!==headers.length)throw new Error('Every CSV row must contain exactly nine fields.');return Object.fromEntries(headers.map((h,i)=>[h,values[i]]));}));}

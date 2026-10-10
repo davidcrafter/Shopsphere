@@ -1,4 +1,1 @@
-import { Navigate, useParams } from 'react-router-dom';
-import { categories } from '@/data/categories';
-import { CatalogPage } from './CatalogPage';
-export function CategoryRoute() { const { slug } = useParams(); if (!slug || !categories.some((item) => item.slug === slug)) return <Navigate to="/404" replace />; return <CatalogPage mode="category" categorySlug={slug} />; }
+import{Navigate,useParams}from'react-router-dom';import{useCatalog}from'@/hooks/useCatalog';import{CatalogPage}from'./CatalogPage';export function CategoryRoute(){const{slug}=useParams(),{categories,loading}=useCatalog();if(loading)return <div className="route-loading">Loading category…</div>;if(!slug||!categories.some(c=>c.slug===slug))return <Navigate to="/404" replace/>;return <CatalogPage mode="category" categorySlug={slug}/>}

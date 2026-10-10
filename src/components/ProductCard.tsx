@@ -1,18 +1,2 @@
-import { ArrowUpRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { formatPrice } from '@/utils/catalog';
-import { isValidAffiliateUrl } from '@/services/affiliate';
-import type { Product } from '@/types/catalog';
-import { SellerButton } from './SellerButton';
-
-export function ProductCard({ product, placement = 'product-grid' }: { product: Product; placement?: string }) {
-  const hasLink = isValidAffiliateUrl(product.affiliateUrls.amazon, 'amazon') || isValidAffiliateUrl(product.affiliateUrls.aliexpress, 'aliexpress');
-  return <article className="product-card">
-    <Link className="product-card__image" to={`/product/${product.slug}`}><img src={product.images[0]?.src || '/favicon.svg'} alt={product.images[0]?.alt || product.name} loading="lazy" width="640" height="640" />{product.isDemo && <span className="badge badge--demo">Demo listing</span>}</Link>
-    <div className="product-card__body"><span className="eyebrow">{product.category.replace('-', ' ')}</span><h3><Link to={`/product/${product.slug}`}>{product.name}</Link></h3><p>{product.shortDescription}</p>
-      <div className="product-card__price">{product.price && !product.price.isDemo ? <><strong>{formatPrice(product.price.amount, product.price.currency)}</strong><small>Verified {new Date(product.price.verifiedAt).toLocaleDateString()}</small></> : <span>Check seller for current price</span>}</div>
-      <div className="product-card__actions"><SellerButton compact seller="amazon" url={product.affiliateUrls.amazon} productId={product.id} placement={placement} /><SellerButton compact seller="aliexpress" url={product.affiliateUrls.aliexpress} productId={product.id} placement={placement} />{!hasLink && <span className="link-pending">Seller link pending verification</span>}</div>
-      <Link className="details-link" to={`/product/${product.slug}`}>View product details <ArrowUpRight size={16} /></Link>
-    </div>
-  </article>;
-}
+import{ShoppingBag}from'lucide-react';import{Link}from'react-router-dom';import{useCart}from'@/providers/CartProvider';import type{Product}from'@/types/catalog';import{formatMoney,lowestPrice}from'@/utils/catalog';
+export function ProductCard({product}:{product:Product}){const{addItem}=useCart();const available=product.variants.filter(v=>v.available),single=available.length===1?available[0]:null;const price=lowestPrice(product),currency=product.variants[0]?.currency??'USD';return <article className="product-card"><Link className="product-card__image" to={`/product/${product.slug}`}><img src={product.images[0]?.src||'/favicon.svg'} alt={product.images[0]?.alt||product.name} loading="lazy" width="640" height="640"/>{product.isDemo&&<span className="badge badge--demo">Demo product</span>}{!available.length&&<span className="badge badge--sold">Unavailable</span>}</Link><div className="product-card__body"><span className="eyebrow">{product.category.replace('-',' ')}</span><h3><Link to={`/product/${product.slug}`}>{product.name}</Link></h3><p>{product.shortDescription}</p><div className="store-price"><strong>{formatMoney(price,currency)}</strong>{product.variants.length>1&&<small>From</small>}</div><div className="product-card__actions">{single?<button className="button button--primary add-cart" disabled={!single.available||product.isDemo} onClick={()=>!product.isDemo&&addItem(single.id)}><ShoppingBag size={16}/>{product.isDemo?'Demo only':'Add to cart'}</button>:<Link className="button button--primary" to={`/product/${product.slug}`}>Choose options</Link>}<Link className="button button--secondary" to={`/product/${product.slug}`}>View product</Link></div></div></article>}

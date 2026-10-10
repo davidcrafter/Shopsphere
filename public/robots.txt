@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /account/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /login
+Disallow: /register
+Disallow: /search
 
 Sitemap: https://example.com/sitemap.xml
