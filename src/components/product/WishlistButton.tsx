@@ -1,0 +1,3 @@
+import { Heart } from 'lucide-react';
+import { useWishlist } from '@/providers/WishlistProvider';
+export function WishlistButton({ productId, label = false }: { productId: string; label?: boolean }) { const { isSaved, toggle } = useWishlist(); const saved = isSaved(productId); return <button className={`wishlist-button ${saved ? 'wishlist-button--saved' : ''}`} aria-label={saved ? 'Remove from wishlist' : 'Save to wishlist'} aria-pressed={saved} onClick={() => void toggle(productId)}><Heart size={label ? 17 : 19} fill={saved ? 'currentColor' : 'none'} />{label && <span>{saved ? 'Saved' : 'Save'}</span>}</button>; }

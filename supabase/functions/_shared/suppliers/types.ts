@@ -1,1 +1,0 @@
-export interface SupplierAdapter{key:string;mode:'manual'|'api';submit(input:{orderId:string;idempotencyKey:string}):Promise<{status:'submitted'|'manual_action_required'|'failed';reference?:string;message:string}>;sync(reference:string):Promise<{status:string;trackingNumber?:string;carrier?:string}>}

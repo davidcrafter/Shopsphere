@@ -1,10 +1,10 @@
 # Payment configuration
 
-IBYIZAMART ships with a **test-only adapter**, not a live payment gateway. Test orders are permanently marked `mode=test`, excluded from revenue/profit/fulfillment, do not decrement inventory, and cannot be submitted to suppliers.
+IBYIZAMART ships with a **test-only** checkout path, not a live payment gateway. Test orders are permanently `mode=test`, excluded from live revenue/profit, cannot enter supplier fulfillment, and do not change live inventory.
 
-## Enable test checkout
+## Isolated test checkout
 
-Use a non-production Supabase project:
+Use a non-production Supabase project only:
 
 ```bash
 supabase secrets set ALLOW_TEST_CHECKOUT=true ALLOWED_ORIGIN=http://localhost:5173
@@ -12,20 +12,21 @@ supabase functions deploy create-checkout
 supabase functions deploy test-payment
 ```
 
-Set `VITE_ENABLE_TEST_CHECKOUT=true` in local frontend configuration. Customers must authenticate. The server reloads active variants/prices, validates quantities/stock and shipping, ignores browser totals, and creates an idempotent test order. The UI can simulate approval or decline. No money moves.
+Set `VITE_ENABLE_TEST_CHECKOUT=true` locally. The server validates account identity, cart lines, active products, variants, server prices, stock policy, selected shipping rate, coupon eligibility, address fields, and idempotency before it creates a test order. Browser totals are never authoritative.
 
-## Add a live provider
+## Live provider integration
 
-Choose a provider only after confirming support for the merchant country, legal entity, settlement account, currencies, products, and customers. Implement `supabase/functions/_shared/payments/types.ts` server-side. A live implementation must:
+No live payment provider is operational in this repository. `payment-webhook` fails closed until a provider is chosen, approved, implemented, and tested. Flutterwave or any other provider must be confirmed to support the business entity, Rwanda settlement account, intended currencies, payment methods, and customer markets before implementation.
 
-1. Keep API and webhook secrets in Supabase Edge Function secrets—never `VITE_*`.
-2. Recalculate all prices, discounts, tax, and shipping server-side.
-3. Create immutable `mode=live` orders and payments.
-4. Verify signed webhooks using the provider's current official SDK/documentation.
-5. Insert each provider event ID into `payment_webhook_events`; duplicate IDs must return success without reprocessing.
-6. Move an order to paid only from a verified event, never a browser redirect.
-7. Implement inventory reservations with expiry/release for live payment sessions.
-8. Implement provider-confirmed refund state transitions and reconciliation.
-9. Never store raw card numbers, CVV, mobile-money PINs, or bank credentials.
+A live adapter must:
 
-`payment-webhook` currently fails closed with HTTP 501. This is intentional until a real provider is selected and tested.
+1. Keep keys/webhook secrets only in Supabase Edge Function secrets—never `VITE_*` or a browser response.
+2. Create `mode=live` payment attempts after a server-side quote/order transaction.
+3. Verify raw signed webhook requests before parsing or updating an order.
+4. Store provider event IDs in `payment_webhook_events` and make duplicate events idempotent.
+5. Verify provider transaction reference, order association, currency, and amount before payment success.
+6. Reserve/commit/release inventory exactly once through a live-payment state machine.
+7. Record provider-confirmed refunds and reconciliation information.
+8. Never store raw card numbers, CVV, mobile-money PINs, or bank credentials.
+
+Do not activate a provider based only on a browser redirect. A provider webhook or server-side provider verification is required before marking a live order paid.

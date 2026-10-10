@@ -1,1 +1,0 @@
-import type{SupplierAdapter}from'./types.ts';export const manualSupplier:SupplierAdapter={key:'manual',mode:'manual',async submit(){return{status:'manual_action_required',message:'No supplier order was submitted. An administrator must purchase through the authorized supplier channel and record the reference.'}},async sync(){return{status:'manual_action_required'}}};

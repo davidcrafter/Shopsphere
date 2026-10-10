@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+const require = createRequire(import.meta.url);
+const ts = require('typescript');
+const source = readFileSync(new URL('../../src/utils/catalog.ts', import.meta.url), 'utf8');
+const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+const module = { exports: {} }; new Function('exports', 'module', 'require', output)(module.exports, module, require);
+const { currencyMinorDigits, displayToMinor, formatMoney, minorToDisplay } = module.exports;
+test('RWF uses zero decimal minor units', () => { assert.equal(currencyMinorDigits('RWF'), 0); assert.equal(minorToDisplay(25000, 'RWF'), 25000); assert.equal(displayToMinor(25000, 'RWF'), 25000); assert.match(formatMoney(25000, 'RWF'), /25[,\s]?000/); });
+test('two-decimal currencies round monetary input safely', () => { assert.equal(currencyMinorDigits('USD'), 2); assert.equal(displayToMinor(29.99, 'USD'), 2999); assert.equal(minorToDisplay(2999, 'USD'), 29.99); });

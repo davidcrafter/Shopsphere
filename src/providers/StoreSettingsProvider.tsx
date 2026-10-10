@@ -1,0 +1,8 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { siteConfig } from '@/config/site';
+import { supabase } from '@/services/supabase';
+interface StoreSettings { contactEmail: string; contactPhone: string; businessLocation: string; currency: string; timezone: string; }
+const fallback: StoreSettings = { contactEmail: siteConfig.contactEmail, contactPhone: siteConfig.contactPhone, businessLocation: siteConfig.businessLocation, currency: siteConfig.defaultCurrency, timezone: siteConfig.timezone };
+const StoreSettingsContext = createContext<StoreSettings>(fallback);
+export function StoreSettingsProvider({ children }: { children: ReactNode }) { const [settings, setSettings] = useState<StoreSettings>(fallback); useEffect(() => { if (!supabase) return; void supabase.from('store_settings').select('key,value_text').in('key', ['contact_email', 'contact_phone', 'business_location', 'timezone']).then(({ data }) => { if (!data) return; const rows = Object.fromEntries(data.map((row) => [row.key, row.value_text || ''])); setSettings((current) => ({ contactEmail: rows.contact_email || current.contactEmail, contactPhone: rows.contact_phone || current.contactPhone, businessLocation: rows.business_location || current.businessLocation, currency: rows.default_currency || current.currency, timezone: rows.timezone || current.timezone })); }); }, []); const value = useMemo(() => settings, [settings]); return <StoreSettingsContext.Provider value={value}>{children}</StoreSettingsContext.Provider>; }
+export function useStoreSettings() { return useContext(StoreSettingsContext); }

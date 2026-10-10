@@ -1,0 +1,7 @@
+import { Navigate, useParams } from 'react-router-dom';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { ProductGrid } from '@/components/ProductGrid';
+import { Seo } from '@/components/Seo';
+import { useCatalog } from '@/hooks/useCatalog';
+import { useCollections } from '@/hooks/useStorefrontData';
+export function CollectionPage() { const { slug } = useParams(); const { collections, loading } = useCollections(); const { products } = useCatalog(); const collection = collections.find((item) => item.slug === slug); if (!collection && loading) return <div className="route-loading">Loading collection…</div>; if (!collection) return <Navigate to="/404" replace />; const selected = products.filter((product) => collection.productIds.includes(product.id)); return <><Seo title={collection.name} description={collection.description} path={`/collection/${collection.slug}`} image={collection.bannerImage || undefined} /><Breadcrumbs items={[{ label: 'Shop', to: '/shop' }, { label: collection.name }]} /><header className="collection-hero" style={collection.bannerImage ? { backgroundImage: `linear-gradient(90deg, rgba(16,36,58,.86), rgba(16,36,58,.28)), url(${collection.bannerImage})` } : undefined}><div className="container"><span className="eyebrow">Curated collection</span><h1>{collection.name}</h1><p>{collection.description}</p></div></header><section className="section"><div className="container"><ProductGrid products={selected} /></div></section></>; }

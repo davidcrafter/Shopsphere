@@ -1,11 +1,12 @@
-# Supabase commerce setup
+# Supabase setup
 
-1. Create a project and apply the migrations in order: `migrations/001_initial.sql`, `migrations/002_dropshipping_commerce.sql`, then `migrations/003_ibyizamart_rebrand.sql`.
-2. Configure frontend project URL and anon/publishable key. Never use the service-role key in Vite.
-3. Enable Email authentication and add `/account` and `/reset-password` production URLs to Auth redirects.
-4. Assign the first administrator through trusted Supabase controls using `app_metadata.role=admin`.
-5. Deploy `create-checkout` and `test-payment` only to a non-production/test project while test mode is enabled.
-6. Set `ALLOWED_ORIGIN` to the exact frontend origin. Keep `ALLOW_TEST_CHECKOUT=false` in production.
-7. Review every RLS policy and execute `docs/TESTING.md` with anonymous, two customer, admin, and service-role contexts.
+1. Create separate development/staging/production Supabase projects. Do not mix test and live payment data.
+2. Apply migrations in order: `001_initial.sql`, `002_dropshipping_commerce.sql`, `003_ibyizamart_rebrand.sql`, then `004_manual_store_operations.sql`.
+3. Configure browser-safe `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; never expose `SUPABASE_SERVICE_ROLE_KEY`.
+4. Enable Email Auth and add `/account`, `/reset-password`, `/verify-email`, and production origins to allowed redirect URLs.
+5. Provision administrator roles through trusted Supabase controls, never a public registration flow.
+6. Create manual products, shipping zones/rates, content, and policies in the protected admin routes.
+7. Deploy public support/tracking functions with `ALLOWED_ORIGIN` configured exactly. Deploy test checkout only to an isolated non-production project.
+8. Test RLS across anonymous, two customer, admin, and service-role contexts before launch.
 
-The public catalog reads `storefront_products`; supplier costs are in `product_private`. Customer orders are filtered by `auth.uid()`. Test data is mode-isolated. Live payment and automated supplier adapters are intentionally fail-closed until provider credentials and official integration requirements are supplied.
+The public storefront uses narrow views such as `storefront_products`; supplier costs, internal notes, payment metadata, audit entries, and private support content are excluded. Products are manual-only: no external catalog ingestion, scraping, synchronization, or automated supplier ordering feature is present.

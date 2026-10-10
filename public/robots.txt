@@ -6,6 +6,14 @@ Disallow: /cart
 Disallow: /checkout
 Disallow: /login
 Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /wishlist
+Disallow: /track-order
+Disallow: /order-confirmation/
+Disallow: /offline
+Disallow: /500
 Disallow: /search
 
 Sitemap: https://example.com/sitemap.xml

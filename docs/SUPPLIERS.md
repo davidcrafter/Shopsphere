@@ -1,21 +1,36 @@
-# Supplier integration and fulfillment
+# Manual supplier and fulfillment workflow
 
-The active supplier adapter is manual. It never claims to submit an order. Paid **live** orders can be reviewed by an administrator, purchased through an authorized supplier channel, then updated with a verified supplier reference, carrier, and tracking number.
+IBYIZAMART is a **manual-catalog store**. Products are created only by an authorized administrator in `/admin/products`. The application contains no external catalog ingestion, product scraping, synchronization, or automatic supplier-order submission.
 
-## AliExpress import
+## Manual supplier records
 
-`/admin/suppliers` accepts an exact nine-column CSV header:
+Use `/admin/suppliers` to create private records for suppliers you have independently approved. Records may contain a contact name, business website, country, currency, payment terms, realistic processing/delivery notes, reliability notes, and internal notes.
 
-```text
-supplier_product_id,product_title,supplier_url,image_url,category,supplier_cost,shipping_cost,selling_price,sku
-```
+Supplier records are private. Customers cannot read supplier names, contact details, costs, internal notes, supplier references, or operational history.
 
-Imports require an authenticated admin, authorized HTTPS AliExpress product URL, HTTPS image, existing database category slug, bounded costs/prices, and SKU. Each row is atomically upserted by supplier name + external ID as an unpublished draft. Imported supplier cost and URL are stored in `product_private`, never public catalog views. Selling price is explicit and is not overwritten by supplier cost changes.
+## Manual product entry
 
-Review image/data rights, variants, specifications, safety/compliance, inventory, shipping, and pricing before publication. A partially completed batch reports the exact number committed; reruns update matching supplier identities.
+When adding a product, the administrator manually enters:
 
-## Automated adapter
+- product content, images, variants, SKU, stock, retail price, and publication state;
+- optional private supplier name/reference/website;
+- supplier product and shipping costs, packaging cost, other unit cost, and notes;
+- delivery estimates, inventory/backorder settings, and SEO fields.
 
-Implement the server interface in `supabase/functions/_shared/suppliers/types.ts` only after supplier/API approval. Credentials belong in Edge Function secrets. An adapter must normalize quote, submit, cancel, status, and tracking results; use idempotency keys; preserve supplier responses for audit; retry safely; and fall back to manual action without reporting false success.
+A supplier cost update does not overwrite the product selling price.
 
-Before enabling supplier submission, enforce that the order is `mode=live`, payment is verified, shipping address is valid, the variant mapping is current, and no supplier order already exists. Test orders are never eligible.
+## Manual fulfillment
+
+After a verified **live** payment (once a real payment provider is configured):
+
+1. Review the customer order and confirmed payment state.
+2. Purchase/arrange fulfillment through your supplier outside IBYIZAMART.
+3. Record the supplier reference, actual fulfillment cost, carrier, and tracking evidence in the admin order screen.
+4. Move the order through valid fulfillment states.
+5. Update the customer only after a status or tracking detail is verified.
+
+Test orders cannot enter fulfillment. The application never claims that a supplier has been contacted or an order has been submitted automatically.
+
+## Data and operational review
+
+Before publishing a product, verify product safety/compliance, imagery rights, descriptions, variant identity, stock policy, realistic delivery estimates, customer return eligibility, and pricing. Retain supplier/order evidence according to your accounting and legal obligations.
