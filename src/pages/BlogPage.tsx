@@ -1,0 +1,6 @@
+import { BlogCard } from '@/components/BlogCard';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { Seo } from '@/components/Seo';
+import { articles } from '@/data/articles';
+
+export function BlogPage({ guidesOnly = false }: { guidesOnly?: boolean }) { const title = guidesOnly ? 'Buying Guides' : 'Blog & Buying Guides'; const visibleArticles = guidesOnly ? articles.filter((article) => article.researchedGuide) : articles; return <><Seo title={title} description="Research-led buying guides and practical product comparison advice from ShopSphere." path={guidesOnly ? '/guides' : '/blog'} /><Breadcrumbs items={[{ label: title }]} /><header className="page-hero"><div className="container"><span className="eyebrow">Shop with context</span><h1>{title}</h1><p>Practical frameworks, transparent research, and useful questions to ask before you buy.</p></div></header><section className="section"><div className="container"><div className="editorial-callout"><strong>Our editorial standard</strong><p>These are researched buying guides, not claims of hands-on testing. When we personally test a product, the article will say so explicitly and explain the method.</p></div><div className="blog-grid blog-grid--listing">{visibleArticles.map((article) => <BlogCard article={article} key={article.slug} />)}</div></div></section></>; }
