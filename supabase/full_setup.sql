@@ -286,6 +286,9 @@ revoke all on function public.finalize_test_payment(uuid,uuid,text) from public;
 
 -- Retire legacy affiliate-only fields and seed the initial store taxonomy.
 drop table if exists public.affiliate_click_events;
+-- admin_product_overview is built with products.* so it depends on the columns
+-- dropped below. Drop it first; it is recreated at the end of this script.
+drop view if exists public.admin_product_overview;
 alter table public.products drop constraint if exists amazon_https;
 alter table public.products drop constraint if exists aliexpress_https;
 alter table public.products drop column if exists amazon_affiliate_url;
@@ -1142,6 +1145,11 @@ create or replace view public.customer_contact_messages as
 select id, name, email, order_number, subject, message, status, created_at, updated_at
 from public.contact_messages where user_id = auth.uid();
 grant select on public.customer_contact_messages to authenticated;
+
+-- Recreate admin_product_overview now that all product columns are final.
+-- (It was dropped earlier so the legacy affiliate columns could be removed.)
+create or replace view public.admin_product_overview as select p.*,pp.supplier_name,pp.supplier_product_url,pp.supplier_external_id,pp.supplier_cost_minor,pp.supplier_shipping_minor,pp.packaging_cost_minor,coalesce(pp.supplier_cost_minor+pp.supplier_shipping_minor+pp.packaging_cost_minor,0)total_supplier_cost_minor,coalesce((select min(v.price_minor)from product_variants v where v.product_id=p.id),0)lowest_price_minor,coalesce((select min(v.price_minor)from product_variants v where v.product_id=p.id),0)-coalesce(pp.supplier_cost_minor+pp.supplier_shipping_minor+pp.packaging_cost_minor,0)estimated_gross_profit_minor,coalesce((select jsonb_agg(to_jsonb(v))from product_variants v where v.product_id=p.id),'[]')variants from products p left join product_private pp on pp.product_id=p.id where is_admin();
+grant select on public.admin_product_overview to authenticated;
 
 commit;
 
