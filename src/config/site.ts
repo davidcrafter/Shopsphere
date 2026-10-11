@@ -5,7 +5,7 @@ export const siteConfig = {
   slogan: 'Discover. Compare. Save.',
   description: 'A modern online store for quality everyday products, clear prices, and dependable order support.',
   url: import.meta.env.VITE_SITE_URL || 'https://example.com',
-  contactEmail: import.meta.env.VITE_CONTACT_EMAIL || 'support@example.com',
+  contactEmail: import.meta.env.VITE_CONTACT_EMAIL || 'ibyizamart@gmail.com',
   contactPhone: import.meta.env.VITE_CONTACT_PHONE || '',
   businessLocation: import.meta.env.VITE_BUSINESS_LOCATION || 'Kigali, Rwanda',
   defaultCurrency: 'RWF' as CurrencyCode,
