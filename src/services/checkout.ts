@@ -5,3 +5,34 @@ const KEY = 'ibyizamart-checkout-attempt';
 const addressSchema = z.object({ fullName: z.string().trim().min(2).max(120), email: z.string().trim().email().max(254), phone: z.string().trim().max(30).optional(), line1: z.string().trim().min(3).max(160), line2: z.string().trim().max(160).optional(), city: z.string().trim().min(2).max(100), region: z.string().trim().min(2).max(100), postalCode: z.string().trim().min(2).max(30), countryCode: z.string().trim().length(2), province: z.string().trim().max(100).optional(), district: z.string().trim().max(100).optional(), sector: z.string().trim().max(100).optional(), neighborhood: z.string().trim().max(100).optional(), deliveryInstructions: z.string().trim().max(500).optional() });
 function attemptKey(fingerprint: string) { try { const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null') as { key?: string; fingerprint?: string } | null; if (saved?.key && saved.fingerprint === fingerprint) return saved.key; } catch { sessionStorage.removeItem(KEY); } const key = crypto.randomUUID(); sessionStorage.setItem(KEY, JSON.stringify({ key, fingerprint })); return key; }
 export async function createCheckout(lines: CartLine[], address: AddressInput, shippingRateId: string, discountCode: string, simulate: 'approve' | 'decline') { if (!supabase) throw new Error('Checkout is not configured. Connect Supabase before accepting orders.'); const parsed = addressSchema.parse(address); if (!lines.length) throw new Error('Your cart is empty.'); const idempotencyKey = attemptKey(JSON.stringify({ lines, parsed, shippingRateId, discountCode: discountCode.trim().toUpperCase() })); const { data, error } = await supabase.functions.invoke('create-checkout', { body: { lines: lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })), shippingAddress: parsed, shippingRateId, discountCode: discountCode.trim() || null, paymentMethod: 'test', idempotencyKey } }); if (error) throw new Error(error.message || 'Checkout could not be created.'); if (!data?.orderId) throw new Error('The checkout service returned an invalid response.'); const payment = await supabase.functions.invoke('test-payment', { body: { orderId: data.orderId, outcome: simulate, idempotencyKey } }); if (payment.error) throw new Error(payment.error.message || 'Test payment could not be verified.'); sessionStorage.removeItem(KEY); if (simulate === 'decline') throw new Error('The test payment was declined as requested. No paid order was created.'); if (!payment.data?.verified) throw new Error('Payment was not verified.'); return { orderId: String(data.orderId), orderNumber: String(data.orderNumber), totalMinor: Number(data.totalMinor), shippingMinor: Number(data.shippingMinor), discountMinor: Number(data.discountMinor), currency: String(data.currency) }; }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Live mobile-money checkout (Paypack: MTN MoMo + Airtel). Creates a server-priced
+// live order, prompts the customer's phone for approval, then polls our backend
+// (which re-verifies against Paypack) until the payment settles.
+export async function createMomoCheckout(lines: CartLine[], address: AddressInput, shippingRateId: string, discountCode: string, momoPhone: string) {
+  if (!supabase) throw new Error('Checkout is not configured. Connect Supabase before accepting orders.');
+  const parsed = addressSchema.parse(address);
+  if (!lines.length) throw new Error('Your cart is empty.');
+  const phone = momoPhone.trim();
+  if (!/^(\+?25)?(078|079|075|073|072)\d{7}$/.test(phone)) throw new Error('Enter a valid MTN or Airtel mobile money number (e.g. 078…).');
+  const idempotencyKey = attemptKey(JSON.stringify({ lines, parsed, shippingRateId, discountCode: discountCode.trim().toUpperCase(), phone, live: true }));
+  const { data, error } = await supabase.functions.invoke('create-momo-checkout', { body: { lines: lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })), shippingAddress: parsed, shippingRateId, discountCode: discountCode.trim() || null, paymentMethod: 'momo', momoPhone: phone, idempotencyKey } });
+  if (error) throw new Error(error.message || 'Checkout could not be created.');
+  if (!data?.orderId) throw new Error(data?.error || 'The checkout service returned an invalid response.');
+  const orderId = String(data.orderId);
+  const summary = { orderId, orderNumber: String(data.orderNumber), totalMinor: Number(data.totalMinor), shippingMinor: Number(data.shippingMinor), discountMinor: Number(data.discountMinor), currency: String(data.currency) };
+  // Poll for confirmation (customer approves the prompt on their phone). ~2 minutes max.
+  let status = String(data.paymentStatus || 'pending');
+  for (let attempt = 0; attempt < 30 && status === 'pending'; attempt += 1) {
+    await sleep(4000);
+    const poll = await supabase.functions.invoke('momo-payment-status', { body: { orderId } });
+    if (poll.error) continue;
+    status = String(poll.data?.status || 'pending');
+  }
+  if (status === 'succeeded') { sessionStorage.removeItem(KEY); return summary; }
+  if (status === 'failed') { sessionStorage.removeItem(KEY); throw new Error('The mobile money payment was declined or not completed. Please try again.'); }
+  // Timed out while still pending: keep the idempotency key so a retry resumes the same order.
+  throw new Error('We have not received payment confirmation yet. If you approved the prompt on your phone, your order will update shortly — check "My Orders".');
+}
